@@ -146,9 +146,11 @@ fn is_valid_ed25519_signature(address: &Address, payload: &[u8; 32], scval: &ScV
 /// Verifies a signed charge entry against the charge it's expected to
 /// authorize, failing closed on the first mismatch, checked in this order:
 ///
-/// 1. [`SorochargeError::ExpiredEntry`] — `valid_until_ledger` has passed
+/// 1. [`SorochargeError::AmountNonPositive`] — `expected.amount` is zero or
+///    negative, which is never a valid charge regardless of the entry.
+/// 2. [`SorochargeError::ExpiredEntry`] — `valid_until_ledger` has passed
 ///    `current_ledger`.
-/// 2. [`SorochargeError::ExpirationExceedsAllowance`] — the entry's own
+/// 3. [`SorochargeError::ExpirationExceedsAllowance`] — the entry's own
 ///    `signature_expiration_ledger` is later than `expected.valid_until_ledger`.
 ///    Checking only "not yet expired" (the previous check) bounds how late
 ///    is too late; it never bounded how *long-lived* an authorization the
@@ -157,10 +159,10 @@ fn is_valid_ed25519_signature(address: &Address, payload: &[u8; 32], scval: &ScV
 ///    verify_entry would pass it as long as it hadn't expired yet — found
 ///    reviewing a downstream binding that needed to read this field and
 ///    found nothing enforced it.
-/// 3. [`SorochargeError::UnexpectedInvocationShape`] — the entry doesn't
+/// 4. [`SorochargeError::UnexpectedInvocationShape`] — the entry doesn't
 ///    authorize a single, bare SEP-41 `transfer(from, to, amount)` call.
-/// 4. [`SorochargeError::AssetMismatch`] — the asset contract differs.
-/// 5. [`SorochargeError::PayerMismatch`] — the authorizing address (the
+/// 5. [`SorochargeError::AssetMismatch`] — the asset contract differs.
+/// 6. [`SorochargeError::PayerMismatch`] — the authorizing address (the
 ///    credential's address, which must also be the invocation's `from`)
 ///    differs from `expected.payer`. This check is not in the CLAUDE.md
 ///    section 5 checklist verbatim (which lists only asset/amount/recipient
@@ -194,6 +196,13 @@ pub fn verify_entry(
     current_ledger: u32,
     network_passphrase: &str,
 ) -> Result<(), SorochargeError> {
+    // A non-positive `expected.amount` is never a valid charge, independent
+    // of the entry being verified. Rejecting it first fails closed before any
+    // attacker-supplied XDR is decoded or compared.
+    if expected.amount <= 0 {
+        return Err(SorochargeError::AmountNonPositive);
+    }
+
     let xdr_entry = entry.as_xdr();
     let (authorizing_address, signable_nodes) =
         authorizing_address_and_signable_nodes(&xdr_entry.credentials)?;
@@ -512,7 +521,7 @@ mod tests {
             "verify_entry should reject amount == 0"
         );
         // Test with negative amount
-        let mut expected_neg = f.expected;
+        let mut expected_neg = f.expected.clone();
         expected_neg.amount = -1;
         let result = verify_entry(
             &f.signed,

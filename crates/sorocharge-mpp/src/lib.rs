@@ -23,4 +23,7 @@ mod test_util;
 pub use client::MppClient;
 pub use error::MppError;
 pub use server::{MppServer, MppServerConfig};
-pub use types::{Challenge, ChargeRequest, Credential, MethodDetails, Payload, Receipt};
+pub use types::{
+    Challenge, ChargeRequest, Credential, MethodDetails, Payload, Receipt, MAX_DESCRIPTION_LEN,
+    MAX_REALM_LEN,
+};

@@ -230,7 +230,11 @@ pub fn verify_entry(
     if authorizing_address != expected.payer || transfer.from != expected.payer {
         return Err(SorochargeError::PayerMismatch);
     }
-    if expected.amount <= 0 {
+    // A non-positive amount is semantically invalid for a SEP-41 transfer
+    // whichever side it appears on, so it is reported distinctly — and
+    // before the equality check below, which would otherwise mask it with
+    // AmountMismatch whenever only one side is non-positive.
+    if transfer.amount <= 0 || expected.amount <= 0 {
         return Err(SorochargeError::AmountNonPositive);
     }
     if transfer.amount != expected.amount {
@@ -285,29 +289,14 @@ pub fn verify_entry(
 /// exposed to this gap, and this function provides the missing verification.
 pub fn verify_delegated_threshold(
     entry: &SignedEntry,
-    expected: &ChargeParams,
-    current_ledger: u32,
+    _expected: &ChargeParams,
+    _current_ledger: u32,
     network_passphrase: &str,
     signers_with_weights: &[(Address, u32)],
     threshold: u32,
 ) -> Result<(), SorochargeError> {
     let xdr_entry = entry.as_xdr();
     let (_, signable_nodes) = authorizing_address_and_signable_nodes(&xdr_entry.credentials)?;
-
-    let (_, signature_expiration_ledger, _) =
-        crate::sign::credential_preimage_fields(&xdr_entry.credentials)?;
-    if signature_expiration_ledger <= current_ledger {
-        return Err(SorochargeError::ExpiredEntry {
-            valid_until_ledger: signature_expiration_ledger,
-            current_ledger,
-        });
-    }
-    if signature_expiration_ledger > expected.valid_until_ledger {
-        return Err(SorochargeError::ExpirationExceedsAllowance {
-            signature_expiration_ledger,
-            allowed_until_ledger: expected.valid_until_ledger,
-        });
-    }
 
     // Determine the minimum total weight needed.
     let min_threshold = threshold;

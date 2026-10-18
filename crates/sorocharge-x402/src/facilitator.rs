@@ -76,6 +76,41 @@ pub struct Facilitator<'a> {
 impl<'a> Facilitator<'a> {
     /// `signer` is the facilitator's own fee-paying key: the account that
     /// becomes every settled transaction's source account.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use sorocharge_signer::{Address, Signer, SorochargeError};
+    /// use sorocharge_x402::{Facilitator, FacilitatorConfig};
+    ///
+    /// struct FeePayer {
+    ///     address: Address,
+    /// }
+    ///
+    /// impl Signer for FeePayer {
+    ///     fn sign_preimage(&self, preimage: &[u8]) -> Result<[u8; 64], SorochargeError> {
+    ///         todo!("ed25519-sign the sha256 preimage with this fee-paying key")
+    ///     }
+    ///
+    ///     fn address(&self) -> Address {
+    ///         self.address.clone()
+    ///     }
+    /// }
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let rpc: stellar_rpc_client::Client = todo!("a Stellar RPC client pointed at your endpoint");
+    /// # let signer = FeePayer {
+    /// #     address: "GDIEVMRSOQV3JKZ2CNUL2RQV4TTNAISKW4NAC25PQUQKGMWJO6DTOAE7".parse()?,
+    /// # };
+    /// let facilitator = Facilitator::new(
+    ///     &rpc,
+    ///     &signer,
+    ///     "Test SDF Network ; September 2015".to_string(),
+    ///     FacilitatorConfig::default(),
+    /// );
+    /// # Ok(())
+    /// # }
+    /// ```
     #[must_use]
     pub fn new(
         rpc: &'a stellar_rpc_client::Client,

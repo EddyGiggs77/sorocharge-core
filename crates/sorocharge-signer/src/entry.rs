@@ -251,6 +251,29 @@ fn random_nonce() -> Result<i64, SorochargeError> {
 /// `credential` this build of the library does not yet construct XDR for,
 /// and [`SorochargeError::XdrEncodingFailed`] if a value can't be encoded
 /// into its XDR-constrained shape (e.g. a `VecM` length limit).
+///
+/// # Example
+///
+/// ```no_run
+/// use sorocharge_signer::{build_charge_entry, parse_address, ChargeParams, CredentialKind};
+///
+/// # fn main() -> Result<(), sorocharge_signer::SorochargeError> {
+/// let params = ChargeParams {
+///     // The asset contract being pulled from (an `ScAddress` — `C...` for
+///     // a issued Soroban asset token, `G...` for a native-XLM-like stub).
+///     asset_contract: parse_address("GCX7DRGVA2GIN3IBOQDNZZTL3PQKUPBAJ3EPZXVOEVNGA4V5PV4NCRAA")?,
+///     amount: 1_500_000, // 1.5 XLM, in stroops (7 decimal digits)
+///     payer: parse_address("GDIEVMRSOQV3JKZ2CNUL2RQV4TTNAISKW4NAC25PQUQKGMWJO6DTOAE7")?,
+///     recipient: parse_address("GCQJVJPUPJTVTABP7FK7RXBNFIKKLSM5EO7JP6DECJ77SOBUKWSPB64N")?,
+///     valid_until_ledger: 100_000,
+/// };
+///
+/// let unsigned = build_charge_entry(&params, CredentialKind::Legacy)?;
+/// // `unsigned` is an `UnsignedEntry`; pass it to `sign_entry` next to
+/// // produce the signed `SorobanAuthorizationEntry`.
+/// # Ok(())
+/// # }
+/// ```
 pub fn build_charge_entry(
     params: &ChargeParams,
     credential: CredentialKind,

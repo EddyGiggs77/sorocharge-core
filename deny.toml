@@ -1,49 +1,63 @@
 # deny.toml — cargo-deny configuration for vulnerability and license scanning
+#
+# Configuration for cargo-deny >= 0.19 uses standard TOML tables. Licenses that
+# are not explicitly listed under [licenses].allow are denied by default, which
+# causes `cargo deny check` to fail.
 
-# Advisory scanning: fail on any new advisory in the dependency tree
-advisories = "warn"
+# This section is considered when running `cargo deny check advisories`.
+[advisories]
+# A list of advisory IDs to ignore. Ignored advisories still emit a note.
+# cargo-deny >= 0.19 treats every vulnerability advisory as an error, so the
+# advisories below are ignored to preserve this project's historical "warn"
+# behaviour for advisory scanning. Each lists a reason and, where useful, the
+# crate(s) the ignore applies to.
+ignore = [
+    # TLS session `Debug` impls previously leaked key material in debug output.
+    { id = "RUSTSEC-2026-0346", reason = "we do not log TLS session debug output" },
+    # Application data buffered after an ECH rejection.
+    { id = "RUSTSEC-2026-0347", reason = "we do not use Encrypted Client Hello" },
+    # Brotli certificate decompression can allocate up to 1 GiB.
+    { id = "RUSTSEC-2026-0348", reason = "we do not accept Brotli-compressed certificates" },
+    # Unauthenticated ServerHello can downgrade later connections.
+    { id = "RUSTSEC-2026-0349", reason = "we pin the rustls version and validate server certs" },
+]
 
-# License scanning: fail on GPL-incompatible licenses, warn on others
-licenses = "warn"
+# This section is considered when running `cargo deny check licenses`.
+[licenses]
+# List of explicitly allowed licenses. See https://spdx.org/licenses/ for the
+# full list of possible identifiers.
+allow = [
+    # Permissive licenses
+    "MIT",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "Unlicense",
 
-# Explicitly allow list — any licenses not matched here that are restricted
-# will cause cargo-deny to fail. We allow common permissive licenses.
-allow {
-  # Permissive licenses
-  MIT
-  Apache-2.0
-  BSD-2-Clause
-  BSD-3-Clause
-  BSD-4-Clause
-  Unlicense
+    # Stellar/Soroban ecosystem
+    "ISC",
 
-  # Stellar/Soroban ecosystem
-  ISC
-}
+    # Pulled in transitively by `url` (ICU) and `reqwest`
+    "Unicode-3.0",
+    "CDLA-Permissive-2.0",
+]
 
-# Deny list — licenses that are never allowed
-deny {
-  # Copyleft licenses that are incompatible with proprietary use
-  GPL-2.0
-  GPL-2.0+
-  GPL-3.0
-  GPL-3.0+
-  AGPL-3.0
-  AGPL-3.0+
-  LGPL-2.1
-  LGPL-2.1+
-  LGPL-3.0
-  LGPL-3.0+
-}
+# This section is considered when running `cargo deny check bans`.
+[bans]
+# Lint level for when multiple versions of the same crate are detected
+multiple-versions = "warn"
+# Lint level for when a crate version requirement is `*`
+wildcards = "allow"
 
-# Specific advisory exceptions — these are known-good advisories that
-# would otherwise cause cargo-deny to fail. Each needs a reason.
-# Example:
-# exceptions {
-#   "RUSTSEC-2024-0001" = "transitive dependency, not directly used"
-# }
-
-# Ignore advisories from specific sources if needed
-# ignore {
-#   "github.com/rustsec/rustsec: advisory-type" = "reason"
-# }
+# This section is considered when running `cargo deny check sources`.
+[sources]
+# Lint level for what to happen when a crate from a crate registry that is not
+# in the allow list is encountered
+unknown-registry = "warn"
+# Lint level for what to happen when a crate from a git repository that is not
+# in the allow list is encountered
+unknown-git = "warn"
+# List of URLs for allowed crate registries. Defaults to the crates.io index
+# if not specified.
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+# List of URLs for allowed Git repositories
+allow-git = []

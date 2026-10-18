@@ -16,6 +16,8 @@ base64 = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
+tokio = { workspace = true }
+
 [features]
 # Exposes the internal `TransactionEnvelope` parser on a public path so the
 # out-of-workspace `fuzz/` cargo-fuzz target can call it. Never enabled by a

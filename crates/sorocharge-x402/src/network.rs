@@ -1,4 +1,4 @@
-use sorocharge_signer::caip2_for_passphrase;
+use crate::error::X402Error;
 
 /// The network passphrase for mainnet — shared by x402 and MPP.
 pub const PUBNET_PASSPHRASE: &str = "Public Global Stellar Network ; September 2015";

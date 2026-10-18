@@ -437,15 +437,16 @@ impl<'a> MppServer<'a> {
                 })?;
             let next_seq = stellar_xdr::SequenceNumber(account.seq_num.0 + 1);
             let fee = i64::try_from(simulation.min_resource_fee)
-            // simulation.min_resource_fee is u64; i64::MAX is 9.2e18 while
-            // u64::MAX is 1.8e19, so the conversion can lose the top bit.
-            // However, realistic Stellar resource fees are always orders of
-            // magnitude below this ceiling. The unwrap_or(i64::MAX) ensures we
-            // never silently saturate to a wrong value; instead we get i64::MAX
-            // which will then fail the fee > ceiling check (since 2^63-1 > 50_000),
-            // causing the settlement to be refused rather than submitting a
-            // transaction with a spuriously high fee.
-            .saturating_add(self.config.inclusion_buffer_stroops);
+                .unwrap_or(i64::MAX)
+                // simulation.min_resource_fee is u64; i64::MAX is 9.2e18 while
+                // u64::MAX is 1.8e19, so the conversion can lose the top bit.
+                // However, realistic Stellar resource fees are always orders of
+                // magnitude below this ceiling. The unwrap_or(i64::MAX) ensures we
+                // never silently saturate to a wrong value; instead we get i64::MAX
+                // which will then fail the fee > ceiling check (since 2^63-1 > 50_000),
+                // causing the settlement to be refused rather than submitting a
+                // transaction with a spuriously high fee.
+                .saturating_add(self.config.inclusion_buffer_stroops);
             if fee > self.config.max_transaction_fee_stroops {
                 return Err(MppError::VerificationFailed {
                     reason: format!(

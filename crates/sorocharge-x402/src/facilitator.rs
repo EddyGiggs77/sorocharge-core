@@ -397,15 +397,13 @@ impl<'a> Facilitator<'a> {
         let final_tx = rebuild_for_settlement(
             &tx,
             facilitator_account_id,
-            u32::try_from(fee).unwrap_or(u32::MAX)
-            // fee is i64 from the simulation + inclusion buffer. u32::MAX is
+            u32::try_from(fee).unwrap_or(u32::MAX), // fee is i64 from the simulation + inclusion buffer. u32::MAX is
             // 4.3e9 stroops (~0.039 XLM). Real Stellar fees are typically
             // < 10_000 stroops. unwrap_or(u32::MAX) ensures we never silently
             // saturate a fee that's genuinely too high; the FeeExceedsCeiling
             // check above will already have refused such cases. If fee somehow
             // exceeds u32::MAX (extremely unlikely), the transaction won't be
             // submited with an maximal fee rather than erroring out of band.
-            ,
             next_seq_num,
             TransactionExt::V1(soroban_data),
         );

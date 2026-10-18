@@ -47,7 +47,7 @@ fn encode_header_json<T: serde::Serialize>(value: &T) -> Result<String, X402Erro
 }
 
 /// Retries an HTTP GET request with bounded backoff for transient failures.
-/// 
+///
 /// - Retries up to `MAX_RETRY_ATTEMPTS` times (default 3).
 /// - On 5xx or connection-level errors, waits with exponential backoff
 ///   (1s, 2s, 4s...).
@@ -55,7 +55,7 @@ fn encode_header_json<T: serde::Serialize>(value: &T) -> Result<String, X402Erro
 ///   time is bounded by `timeout * attempts` plus backoff.
 /// - On success, returns the successful response immediately.
 /// - On final failure, returns the last error.
-fn retry_get<T: Into<reqwest::Url>>(
+async fn retry_get<T: reqwest::IntoUrl + Clone>(
     http: &reqwest::Client,
     url: T,
 ) -> Result<reqwest::Response, X402Error> {
@@ -81,7 +81,9 @@ fn retry_get<T: Into<reqwest::Url>>(
                 // failures and server 5xx are the transient cases we care about.
                 if attempt < MAX_RETRY_ATTEMPTS {
                     // Exponential backoff: 1s, 2s, 4s, ...
-                    let backoff = std::time::Duration::from_secs(1u64.saturating_pow(attempt.saturating_sub(1)));
+                    let backoff = std::time::Duration::from_secs(
+                        1u64.saturating_pow(attempt.saturating_sub(1)),
+                    );
                     tokio::time::sleep(backoff).await;
                 }
             }
@@ -194,7 +196,7 @@ impl X402Client {
         network_passphrase: &str,
         current_ledger: u32,
     ) -> Result<reqwest::Response, X402Error> {
-        let first = retry_get(&self.http, url).await;
+        let first = retry_get(&self.http, url).await?;
 
         if first.status() == reqwest::StatusCode::OK {
             return Ok(first);
@@ -259,10 +261,15 @@ impl X402Client {
         };
         let header_value = encode_header_json(&payload)?;
 
-        let second = retry_get(&self.http, url)
-            .await
+        let second = self
+            .http
+            .get(url)
             .header(PAYMENT_SIGNATURE_HEADER, header_value)
-            .await;
+            .send()
+            .await
+            .map_err(|e| X402Error::HttpRequestFailed {
+                reason: e.to_string(),
+            })?;
 
         if second.status() != reqwest::StatusCode::OK {
             return Err(X402Error::UnexpectedStatus {

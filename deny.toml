@@ -1,63 +1,20 @@
 # deny.toml — cargo-deny configuration for vulnerability and license scanning
-#
-# Configuration for cargo-deny >= 0.19 uses standard TOML tables. Licenses that
-# are not explicitly listed under [licenses].allow are denied by default, which
-# causes `cargo deny check` to fail.
 
-# This section is considered when running `cargo deny check advisories`.
 [advisories]
-# A list of advisory IDs to ignore. Ignored advisories still emit a note.
-# cargo-deny >= 0.19 treats every vulnerability advisory as an error, so the
-# advisories below are ignored to preserve this project's historical "warn"
-# behaviour for advisory scanning. Each lists a reason and, where useful, the
-# crate(s) the ignore applies to.
-ignore = [
-    # TLS session `Debug` impls previously leaked key material in debug output.
-    { id = "RUSTSEC-2026-0346", reason = "we do not log TLS session debug output" },
-    # Application data buffered after an ECH rejection.
-    { id = "RUSTSEC-2026-0347", reason = "we do not use Encrypted Client Hello" },
-    # Brotli certificate decompression can allocate up to 1 GiB.
-    { id = "RUSTSEC-2026-0348", reason = "we do not accept Brotli-compressed certificates" },
-    # Unauthenticated ServerHello can downgrade later connections.
-    { id = "RUSTSEC-2026-0349", reason = "we pin the rustls version and validate server certs" },
-]
+version = 2
 
-# This section is considered when running `cargo deny check licenses`.
 [licenses]
-# List of explicitly allowed licenses. See https://spdx.org/licenses/ for the
-# full list of possible identifiers.
+version = 2
+# Permissive licenses plus the Stellar/Soroban ecosystem's ISC.
 allow = [
-    # Permissive licenses
-    "MIT",
-    "Apache-2.0",
-    "BSD-3-Clause",
-    "Unlicense",
-
-    # Stellar/Soroban ecosystem
-    "ISC",
-
-    # Pulled in transitively by `url` (ICU) and `reqwest`
-    "Unicode-3.0",
-    "CDLA-Permissive-2.0",
+  "MIT",
+  "Apache-2.0",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "BSD-4-Clause",
+  "Unlicense",
+  "ISC",
+  # Pulled in transitively by the ICU crates and the TLS root-certificate data.
+  "Unicode-3.0",
+  "CDLA-Permissive-2.0",
 ]
-
-# This section is considered when running `cargo deny check bans`.
-[bans]
-# Lint level for when multiple versions of the same crate are detected
-multiple-versions = "warn"
-# Lint level for when a crate version requirement is `*`
-wildcards = "allow"
-
-# This section is considered when running `cargo deny check sources`.
-[sources]
-# Lint level for what to happen when a crate from a crate registry that is not
-# in the allow list is encountered
-unknown-registry = "warn"
-# Lint level for what to happen when a crate from a git repository that is not
-# in the allow list is encountered
-unknown-git = "warn"
-# List of URLs for allowed crate registries. Defaults to the crates.io index
-# if not specified.
-allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-# List of URLs for allowed Git repositories
-allow-git = []

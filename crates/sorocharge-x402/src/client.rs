@@ -51,6 +51,15 @@ impl X402Client {
     /// Builds a client whose every HTTP request is bounded by
     /// `request_timeout` — no unbounded waits on a resource server.
     ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use std::time::Duration;
+    ///
+    /// let client = sorocharge_x402::X402Client::new(Duration::from_secs(30));
+    /// assert!(client.is_ok());
+    /// ```
+    ///
     /// # Errors
     ///
     /// Returns [`X402Error::HttpRequestFailed`] if the underlying HTTP

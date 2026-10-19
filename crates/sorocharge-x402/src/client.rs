@@ -146,6 +146,30 @@ impl X402Client {
     /// # Errors
     ///
     /// See [`X402Error`] for the specific failure modes.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use sorocharge_signer::Signer;
+    /// use sorocharge_x402::X402Client;
+    ///
+    /// # async fn demo(signer: &dyn Signer, current_ledger: u32) -> Result<(), sorocharge_x402::X402Error> {
+    /// let client = X402Client::new(std::time::Duration::from_secs(10))?;
+    ///
+    /// // `current_ledger` comes from a getLatestLedger Stellar RPC call; the
+    /// // client uses it to derive the authorization entry's expiry.
+    /// let response = client
+    ///     .get_with_payment(
+    ///         "https://api.example.com/paid-resource",
+    ///         signer,
+    ///         "Test SDF Network ; September 2015",
+    ///         current_ledger,
+    ///     )
+    ///     .await?;
+    /// println!("resource responded with {}", response.status());
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_with_payment(
         &self,
         url: &str,

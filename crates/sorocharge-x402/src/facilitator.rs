@@ -41,6 +41,20 @@ pub const MIN_INCLUSION_BUFFER_STROOPS: i64 = 100;
 /// Facilitator configuration: the fee-safety ceiling and inclusion buffer
 /// the spec makes an operator-configurable circuit breaker rather than a
 /// protocol constant.
+///
+/// # Examples
+///
+/// ```rust
+/// use sorocharge_x402::FacilitatorConfig;
+///
+/// let config = FacilitatorConfig {
+///     max_transaction_fee_stroops: 100_000,
+///     inclusion_buffer_stroops: 200,
+/// };
+///
+/// assert_eq!(config.max_transaction_fee_stroops, 100_000);
+/// assert_eq!(config.inclusion_buffer_stroops, 200);
+/// ```
 #[derive(Debug, Clone)]
 pub struct FacilitatorConfig {
     pub max_transaction_fee_stroops: i64,
